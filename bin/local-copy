@@ -1,0 +1,26 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+
+DATA_PATH="${XDG_DATA_HOME:-$HOME/.local/share}/spork"
+CONFIG_PATH="${XDG_CONFIG_HOME:-$HOME/.config}/spork"
+REPO_PATH="${DATA_PATH}/r/challenges"
+ENV_FILE="${CONFIG_PATH}/env"
+
+## Setup our local clone
+echo "Repo path is ${REPO_PATH}"
+if [ ! -d "${REPO_PATH}" ]
+then
+  echo "Cloning challenges to ${REPO_PATH}"
+  mkdir -p "${REPO_PATH}"
+  git clone --bare git@github.com:dev-academy-challenges/challenges "${REPO_PATH}"
+else
+  echo "Updating challenges"
+  (cd ${REPO_PATH}; git fetch)
+fi
+
+OUTDIR=$(realpath "./${2}")
+TREE_ID=$(cd ${REPO_PATH}; git ls-tree main "packages/${1}" --object-only)
+echo "writing ${TREE_ID} to ${OUTDIR}"
+(cd ${REPO_PATH}; git archive $TREE_ID) | tar -x -C "${OUTDIR}"
